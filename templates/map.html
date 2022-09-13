@@ -12,82 +12,82 @@
         <script type="text/javascript" id="kakao-api"
             src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{appkey}}&libraries=services"></script>
         <script>
-            let container = document.getElementById("map");
-            let options = {
-                center: new kakao.maps.LatLng(
+            document.addEventListener("DOMContentLoaded", function () {
+                let container = document.getElementById("map");
+                let options = {
+                    center: new kakao.maps.LatLng(
+                        "{{ init_lat | float }}",
+                        "{{ init_lon | float }}"
+                    ),
+                    level: 2,
+                };
+
+                let map = new kakao.maps.Map(container, options);
+
+                // 주소-좌표 변환 객체를 생성
+                let geocoder = new kakao.maps.services.Geocoder();
+
+                // 마커 생성
+                let marker = new kakao.maps.Marker({
+                    map: map,
+                    draggable: true,
+                    position: map.getCenter(),
+                });
+                let infowindow = new kakao.maps.InfoWindow({ zindex: 1 });
+
+                // 초기 위치 세팅
+                let locPosition = new kakao.maps.LatLng(
                     "{{ init_lat | float }}",
                     "{{ init_lon | float }}"
-                ),
-                level: 2,
-            };
-
-            let map = new kakao.maps.Map(container, options);
-
-            // 주소-좌표 변환 객체를 생성
-            let geocoder = new kakao.maps.services.Geocoder();
-
-            // 마커 생성
-            let marker = new kakao.maps.Marker({
-                map: map,
-                draggable: true,
-                position: map.getCenter(),
-            });
-            let infowindow = new kakao.maps.InfoWindow({ zindex: 1 });
-
-            // 초기 위치 세팅
-            let locPosition = new kakao.maps.LatLng(
-                "{{ init_lat | float }}",
-                "{{ init_lon | float }}"
-            );
-            map.setCenter(locPosition);
-
-            let newLocFmPic = null;
-
-            function searchDetailAddrFromCoords(coords, callback) {
-                // 좌표로 법정동 상세 주소 정보를 요청
-                geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
-            }
-
-            // 지도를 클릭했을 때 클릭 위치 좌표에 대한 주소정보를 표시하도록 이벤트를 등록
-            kakao.maps.event.addListener(map, "click", function (mouseEvent) {
-                searchDetailAddrFromCoords(
-                    mouseEvent.latLng,
-                    function (result, status) {
-                        console.log("status = " + status);
-                        if (status === kakao.maps.services.Status.OK) {
-                            //api단에서 도로명주소로 변환할 수 없을 때가 있음 예) 건물과 건물 사이를 클릭했을 때
-                            let detailAddr = !!result[0].road_address
-                                ? "주소: " +
-                                result[0].road_address.address_name.replace(
-                                    "인천광역시 부평구 ",
-                                    ""
-                                ) +
-                                "<br />"
-                                : "<div>건물을 클릭해주세요.</div>";
-
-                            let content =
-                                '<div class="MapModal-address">' + detailAddr + "</div>";
-
-                            // 마커를 클릭한 위치에 표시
-                            marker.setPosition(mouseEvent.latLng);
-                            marker.setMap(map);
-
-                            // 인포윈도우에 법정동 상세 주소정보를 표시
-                            infowindow.setContent(content);
-                            infowindow.open(map, marker);
-
-                            newLocFmPic.value = !!result[0].road_address
-                                ? result[0].road_address.address_name.replace(
-                                    "인천광역시 부평구 ",
-                                    ""
-                                )
-                                : null;
-                        }
-                    }
                 );
-            });
+                map.setCenter(locPosition);
 
-            document.addEventListener("DOMContentLoaded", function () {
+                let newLocFmPic = null;
+
+                function searchDetailAddrFromCoords(coords, callback) {
+                    // 좌표로 법정동 상세 주소 정보를 요청
+                    geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
+                }
+
+                // 지도를 클릭했을 때 클릭 위치 좌표에 대한 주소정보를 표시하도록 이벤트를 등록
+                kakao.maps.event.addListener(map, "click", function (mouseEvent) {
+                    searchDetailAddrFromCoords(
+                        mouseEvent.latLng,
+                        function (result, status) {
+                            console.log("status = " + status);
+                            if (status === kakao.maps.services.Status.OK) {
+                                //api단에서 도로명주소로 변환할 수 없을 때가 있음 예) 건물과 건물 사이를 클릭했을 때
+                                let detailAddr = !!result[0].road_address
+                                    ? "주소: " +
+                                    result[0].road_address.address_name.replace(
+                                        "인천광역시 부평구 ",
+                                        ""
+                                    ) +
+                                    "<br />"
+                                    : "<div>건물을 클릭해주세요.</div>";
+
+                                let content =
+                                    '<div class="MapModal-address">' + detailAddr + "</div>";
+
+                                // 마커를 클릭한 위치에 표시
+                                marker.setPosition(mouseEvent.latLng);
+                                marker.setMap(map);
+
+                                // 인포윈도우에 법정동 상세 주소정보를 표시
+                                infowindow.setContent(content);
+                                infowindow.open(map, marker);
+
+                                newLocFmPic.value = !!result[0].road_address
+                                    ? result[0].road_address.address_name.replace(
+                                        "인천광역시 부평구 ",
+                                        ""
+                                    )
+                                    : null;
+                            }
+                        }
+                    );
+                });
+
                 new QWebChannel(qt.webChannelTransport, function (channel) {
                     newLocFmPic = channel.objects.newLocFmPic;
                 });
